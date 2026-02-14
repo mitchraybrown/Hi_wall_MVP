@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
-import { supabase, uploadWallImage } from '../../supabase'
+import supabase, { uploadWallImage } from '../../supabase' 
 import { Card, Btn, Inp, Badge, Spinner, Overlay } from '../../components/ui'
 import { calcPrice, NEIGHBORHOODS, TRAFFIC_LEVELS, CONDITIONS, ORIENTATIONS, DURATIONS, ACCESS_OPTS, BUILDING_TYPES, fmt } from '../../lib/pricing'
 
