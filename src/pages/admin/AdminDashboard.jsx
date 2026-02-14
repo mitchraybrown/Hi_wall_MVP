@@ -101,7 +101,7 @@ function WallForm({ id, toast, onDone }) {
     width_m:'',height_m:'',traffic_level:'Medium',condition:'Good',orientation:'North',
     access_level:'Ground level (no equipment)',access_notes:'',
     heritage_listed:false,council_restrictions:false,strata_approval:false,color_restrictions:false,restriction_details:'',
-    price_total:'',price_monthly:'',duration_months:'6',
+    price_total:'',price_monthly:'',duration_months:'6',hw_fee_percent:'25',
     availability_status:'available',booked_until:'',available_from:'',
     status:'pending',highlights:'',owner_name:'',owner_email:'',owner_phone:'',
     latitude:'',longitude:'',primary_image_url:''
@@ -115,7 +115,7 @@ function WallForm({ id, toast, onDone }) {
     if (!isNew) {
       supabase.from('walls').select('*').eq('id',id).single().then(({ data }) => {
         if (data) {
-          sF({...data, highlights: (data.highlights||[]).join(', '), width_m: String(data.width_m), height_m: String(data.height_m), price_total: String(data.price_total||''), price_monthly: String(data.price_monthly||''), duration_months: String(data.duration_months||6), latitude: String(data.latitude||''), longitude: String(data.longitude||''), booked_until: data.booked_until||'', available_from: data.available_from||''})
+          sF({...data, highlights: (data.highlights||[]).join(', '), width_m: String(data.width_m), height_m: String(data.height_m), price_total: String(data.price_total||''), price_monthly: String(data.price_monthly||''), duration_months: String(data.duration_months||6), hw_fee_percent: String(data.hw_fee_percent||25), latitude: String(data.latitude||''), longitude: String(data.longitude||''), booked_until: data.booked_until||'', available_from: data.available_from||''})
         }
         setLoading(false)
       })
@@ -136,7 +136,7 @@ function WallForm({ id, toast, onDone }) {
       heritage_listed: f.heritage_listed, council_restrictions: f.council_restrictions,
       strata_approval: f.strata_approval, color_restrictions: f.color_restrictions,
       restriction_details: f.restriction_details,
-      price_total: parseInt(f.price_total)||null, price_monthly: parseInt(f.price_monthly)||null,
+      price_total: parseInt(f.price_total)||null, price_monthly: parseInt(f.price_monthly)||null, hw_fee_percent: parseFloat(f.hw_fee_percent)||25,
       suggested_price: calcPrice({...f, width_m: parseFloat(f.width_m), height_m: parseFloat(f.height_m)}).total,
       duration_months: parseInt(f.duration_months)||6,
       availability_status: f.availability_status,
@@ -232,12 +232,14 @@ function WallForm({ id, toast, onDone }) {
 
     <Card style={{padding:22,marginBottom:16}}>
       <h3 style={{fontSize:15,fontWeight:600,marginBottom:14}}>Pricing & Availability</h3>
-      {sug && <div style={{background:'var(--col)',padding:'10px 14px',borderRadius:10,marginBottom:14,fontSize:13}}>💡 Suggested price: <strong>{fmt(sug.total)}</strong> ({fmt(sug.monthly)}/mo for {f.duration_months} months)</div>}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-        <Inp label="Total Price ($)" type="number" value={f.price_total} onChange={e=>u('price_total',e.target.value)} placeholder={sug?String(sug.total):''}/>
-        <Inp label="Monthly ($)" type="number" value={f.price_monthly} onChange={e=>u('price_monthly',e.target.value)} placeholder={sug?String(sug.monthly):''}/>
+      {sug && <div style={{background:'var(--col)',padding:'10px 14px',borderRadius:10,marginBottom:14,fontSize:13}}>💡 Suggested owner price: <strong>{fmt(sug.ownerTotal)}</strong> ({fmt(sug.ownerMonthly)}/mo) · Campaign total (incl. {sug.hwFeePercent}% fee): <strong>{fmt(sug.campaignTotal)}</strong></div>}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10}}>
+        <Inp label="Total Price ($)" type="number" value={f.price_total} onChange={e=>u('price_total',e.target.value)} placeholder={sug?String(sug.ownerTotal):''}/>
+        <Inp label="Monthly ($)" type="number" value={f.price_monthly} onChange={e=>u('price_monthly',e.target.value)} placeholder={sug?String(sug.ownerMonthly):''}/>
         <Inp label="Duration" type="select" value={f.duration_months} onChange={e=>u('duration_months',e.target.value)}>{DURATIONS.map(d=><option key={d} value={d}>{d} months</option>)}</Inp>
+        <Inp label="Hi Wall Fee %" type="number" value={f.hw_fee_percent} onChange={e=>u('hw_fee_percent',e.target.value)} placeholder="25"/>
       </div>
+      {parseFloat(f.hw_fee_percent||25) !== 25 && <div style={{fontSize:12,color:'var(--co)',fontWeight:600,marginBottom:8}}>⚡ Custom fee rate: {f.hw_fee_percent}% (standard is 25%)</div>}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
         <Inp label="Status" type="select" value={f.status} onChange={e=>u('status',e.target.value)}><option value="pending">Pending</option><option value="approved">Approved</option><option value="denied">Denied</option></Inp>
         <Inp label="Availability" type="select" value={f.availability_status} onChange={e=>u('availability_status',e.target.value)}><option value="available">Available</option><option value="booked">Booked</option></Inp>

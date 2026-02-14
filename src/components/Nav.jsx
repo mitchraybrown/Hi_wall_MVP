@@ -7,9 +7,11 @@ export default function Nav({ session, logout }) {
   const loc = useLocation()
   const links = [
     { to: '/', l: 'Browse Walls' },
+    { to: '/list', l: 'List a Wall' },
+    { to: '/about', l: 'About Us' },
     { to: '/partners', l: 'Partners' },
   ]
-  if (session) links.push({ to: '/admin', l: 'Admin' })
+  if (session) links.push({ to: '/admin', l: 'Dashboard' })
 
   const close = () => setOpen(false)
 
@@ -23,8 +25,11 @@ export default function Nav({ session, logout }) {
         {/* Desktop */}
         <div className="desk" style={{display:'flex',alignItems:'center',gap:3}}>
           {links.map(n => <Link key={n.to} to={n.to} style={{padding:'6px 13px',borderRadius:8,textDecoration:'none',fontSize:13,fontWeight:loc.pathname===n.to?600:500,background:loc.pathname===n.to?'var(--col)':'transparent',color:loc.pathname===n.to?'var(--co)':'var(--sl)'}}>{n.l}</Link>)}
-          {session ? <button onClick={logout} style={{marginLeft:8,background:'none',border:'none',color:'var(--mu)',cursor:'pointer',fontSize:12}}>Sign Out</button>
-           : <Link to="/admin/login"><Btn style={{marginLeft:8,padding:'7px 15px',fontSize:13}}>Admin</Btn></Link>}
+          {session
+            ? <button onClick={logout} style={{marginLeft:8,background:'none',border:'none',color:'var(--mu)',cursor:'pointer',fontSize:12}}>Sign Out</button>
+            : <div style={{display:'flex',gap:6,marginLeft:8}}>
+                <Link to="/admin/login"><Btn variant="secondary" style={{padding:'7px 14px',fontSize:13}}>Log In</Btn></Link>
+              </div>}
         </div>
         {/* Mobile hamburger */}
         <button className="mob" onClick={() => setOpen(!open)} style={{display:'none',background:'none',border:'none',cursor:'pointer',padding:8,flexDirection:'column',gap:4}}>
@@ -34,7 +39,6 @@ export default function Nav({ session, logout }) {
         </button>
       </div>
     </nav>
-    {/* Mobile drawer */}
     {open && <div style={{position:'fixed',inset:0,zIndex:99,animation:'fi .15s'}} onClick={close}>
       <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.4)'}}/>
       <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:56,right:0,width:'75%',maxWidth:300,background:'var(--wh)',height:'calc(100vh - 56px)',boxShadow:'-4px 0 20px rgba(0,0,0,.1)',padding:'20px 16px',animation:'sr .2s ease',overflowY:'auto'}}>
@@ -42,7 +46,7 @@ export default function Nav({ session, logout }) {
         <div style={{borderTop:'1px solid var(--ln)',marginTop:12,paddingTop:12}}>
           {session
             ? <button onClick={() => { logout(); close() }} style={{display:'block',width:'100%',textAlign:'left',padding:'12px 10px',borderRadius:10,border:'none',cursor:'pointer',fontSize:15,color:'var(--rd)',background:'transparent'}}>Sign Out</button>
-            : <Link to="/admin/login" onClick={close}><Btn style={{width:'100%',justifyContent:'center',padding:13}}>Admin Login</Btn></Link>}
+            : <Link to="/admin/login" onClick={close}><Btn style={{width:'100%',justifyContent:'center',padding:13}}>Log In</Btn></Link>}
         </div>
       </div>
     </div>}

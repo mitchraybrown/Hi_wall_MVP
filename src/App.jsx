@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
 import Nav from './components/Nav'
+import Footer from './components/Footer'
 import { Toast } from './components/ui'
 import BrowsePage from './pages/BrowsePage'
 import PartnersPage from './pages/PartnersPage'
+import AboutPage from './pages/AboutPage'
+import ListWallPage from './pages/ListWallPage'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 
@@ -37,15 +40,12 @@ export default function App() {
   return (
     <>
       <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<><Nav session={session} logout={logout} /><BrowsePage toast={toast} /></>} />
-        <Route path="/partners" element={<><Nav session={session} logout={logout} /><PartnersPage toast={toast} /></>} />
-
-        {/* Admin routes */}
+        <Route path="/" element={<><Nav session={session} logout={logout} /><BrowsePage toast={toast} /><Footer /></>} />
+        <Route path="/list" element={<><Nav session={session} logout={logout} /><ListWallPage session={session} toast={toast} /><Footer /></>} />
+        <Route path="/about" element={<><Nav session={session} logout={logout} /><AboutPage toast={toast} /><Footer /></>} />
+        <Route path="/partners" element={<><Nav session={session} logout={logout} /><PartnersPage toast={toast} /><Footer /></>} />
         <Route path="/admin/login" element={session ? <Navigate to="/admin" /> : <AdminLogin toast={toast} />} />
         <Route path="/admin/*" element={session ? <AdminDashboard session={session} logout={logout} toast={toast} /> : <Navigate to="/admin/login" />} />
-
-        {/* Catch all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       {toastMsg && <Toast msg={toastMsg} onClose={() => setToast(null)} />}

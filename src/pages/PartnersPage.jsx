@@ -1,70 +1,102 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
-import { Card, Btn, Inp, Badge, Spinner } from '../components/ui'
+import { Card, Btn, Inp, Overlay, Spinner } from '../components/ui'
 
 export default function PartnersPage({ toast }) {
   const [partners, setPartners] = useState([])
   const [loading, setLoading] = useState(true)
   const [show, setShow] = useState(false)
-  const [f, sF] = useState({ company:'', services:'', portfolio_url:'', contact_email:'' })
-  const [sending, setSending] = useState(false)
+  const [sel, setSel] = useState(null)
+  const [f, setF] = useState({ company: '', services: '', portfolio: '', contact: '', description: '', website: '', logo: '' })
 
   useEffect(() => {
-    supabase.from('partners').select('*').eq('status','approved').then(({ data }) => {
-      setPartners(data || [])
-      setLoading(false)
-    })
+    supabase.from('partners').select('*').eq('status', 'approved').order('company_name')
+      .then(({ data }) => { setPartners(data || []); setLoading(false) })
   }, [])
 
   const submit = async () => {
-    if (!f.company || !f.services || !f.contact_email) return
-    setSending(true)
-    const { error } = await supabase.from('partners').insert(f)
-    setSending(false)
-    if (error) { toast('Error — try again'); return }
-    sF({ company:'', services:'', portfolio_url:'', contact_email:'' })
+    if (!f.company || !f.services || !f.contact) { toast?.('Fill required fields'); return }
+    const { error } = await supabase.from('partners').insert({
+      company_name: f.company, services: f.services, portfolio_url: f.portfolio,
+      contact_email: f.contact, description: f.description, website: f.website,
+      logo_url: f.logo, status: 'pending'
+    })
+    if (error) { toast?.('Error submitting'); return }
+    setF({ company: '', services: '', portfolio: '', contact: '', description: '', website: '', logo: '' })
     setShow(false)
-    toast('Application submitted!')
+    toast?.('Application submitted!')
   }
 
-  if (loading) return <Spinner />
-
   return <div style={{maxWidth:900,margin:'0 auto',padding:'32px 24px 52px'}}>
-    <div className="au" style={{marginBottom:24}}>
-      <h1 style={{fontFamily:'var(--fd)',fontSize:26,fontWeight:700,marginBottom:6}}>Partner Network</h1>
-      <p style={{color:'var(--sl)',fontSize:14,lineHeight:1.7,maxWidth:560}}>Agencies, production teams, and specialist operators handle creative, approvals workflows, install, and content capture. Hi Wall stays focused on the marketplace: inventory, compliance readiness, booking, and governance.</p>
+    <div className="au" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+      <div>
+        <h1 style={{fontFamily:'var(--fd)',fontSize:28,fontWeight:700,marginBottom:4}}>Verified Partners</h1>
+        <p style={{color:'var(--mu)',fontSize:14}}>Approved creative, production, and installation partners</p>
+      </div>
+      <Btn onClick={() => setShow(!show)}>{show ? 'Cancel' : '+ Become a Partner'}</Btn>
     </div>
 
-    <Card className="au d1" style={{padding:'24px 28px',marginBottom:24,background:'linear-gradient(135deg,#1A1A2E,#2D2B55)',border:'none'}}>
-      <h3 style={{fontFamily:'var(--fd)',fontSize:17,fontWeight:700,color:'#fff',marginBottom:12}}>Delivered Through Partners</h3>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:14}}>
-        {[{i:'🎨',t:'Creative',d:'Concept, design, and artwork'},{i:'🔧',t:'Production',d:'Preparation and materials'},{i:'🏗️',t:'Install',d:'On-wall delivery and finishing'},{i:'📸',t:'Content Capture',d:'Photo, video, and social assets'}].map((s,j)=><div key={j} style={{background:'rgba(255,255,255,.06)',borderRadius:10,padding:14,border:'1px solid rgba(255,255,255,.08)'}}><div style={{fontSize:16,marginBottom:6}}>{s.i}</div><div style={{fontSize:13,fontWeight:600,color:'#fff',marginBottom:2}}>{s.t}</div><div style={{fontSize:12,color:'rgba(255,255,255,.5)'}}>{s.d}</div></div>)}
+    {show && <Card className="au" style={{padding:24,marginBottom:24}}>
+      <h3 style={{fontFamily:'var(--fd)',fontSize:18,fontWeight:700,marginBottom:4}}>Partner Application</h3>
+      <p style={{fontSize:12,color:'var(--mu)',marginBottom:16}}>Tell us about your creative business. We'll review your application.</p>
+      <div style={{maxWidth:480}}>
+        <Inp label="Company Name" required value={f.company} onChange={e => setF({...f, company: e.target.value})} placeholder="Company"/>
+        <Inp label="Services Offered" required value={f.services} onChange={e => setF({...f, services: e.target.value})} placeholder="Creative, Production, Install..."/>
+        <Inp label="Brief Description" type="textarea" rows={2} value={f.description} onChange={e => setF({...f, description: e.target.value})} placeholder="What does your company do?"/>
+        <Inp label="Portfolio URL" value={f.portfolio} onChange={e => setF({...f, portfolio: e.target.value})} placeholder="https://..."/>
+        <Inp label="Website" value={f.website} onChange={e => setF({...f, website: e.target.value})} placeholder="https://..."/>
+        <Inp label="Logo URL (or emoji)" value={f.logo} onChange={e => setF({...f, logo: e.target.value})} placeholder="🎨 or https://..."/>
+        <Inp label="Contact Email" required type="email" value={f.contact} onChange={e => setF({...f, contact: e.target.value})} placeholder="hello@company.com"/>
+        <div style={{display:'flex',gap:8}}>
+          <Btn variant="secondary" onClick={() => setShow(false)} style={{flex:1,justifyContent:'center'}}>Cancel</Btn>
+          <Btn onClick={submit} style={{flex:1,justifyContent:'center'}}>Submit Application</Btn>
+        </div>
       </div>
-    </Card>
+    </Card>}
 
-    {partners.length > 0 && <>
-      <h3 className="au d2" style={{fontSize:16,fontWeight:600,marginBottom:10}}>Approved Partners</h3>
-      {partners.map(p => <Card key={p.id} style={{padding:'14px 18px',marginBottom:8,display:'flex',alignItems:'center',gap:12}}>
-        <div style={{width:40,height:40,borderRadius:10,background:'var(--col)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🤝</div>
-        <div style={{flex:1}}><div style={{fontSize:14,fontWeight:600}}>{p.company}</div><div style={{fontSize:12,color:'var(--mu)'}}>{p.services}</div></div>
-        <Badge status="approved"/>
-      </Card>)}
-    </>}
-
-    <Card className="au d3" style={{padding:28,marginTop:24,textAlign:'center'}}>
-      <h3 style={{fontFamily:'var(--fd)',fontSize:20,fontWeight:700,marginBottom:6}}>Become a Partner</h3>
-      <p style={{color:'var(--mu)',fontSize:14,marginBottom:16,maxWidth:400,margin:'0 auto 16px'}}>Join our network of approved creative and production partners.</p>
-      {!show ? <Btn onClick={() => setShow(true)}>Apply Now →</Btn>
-      : <div style={{maxWidth:400,margin:'0 auto',textAlign:'left'}}>
-          <Inp label="Company Name" required value={f.company} onChange={e => sF({...f, company:e.target.value})} placeholder="Company"/>
-          <Inp label="Services" required value={f.services} onChange={e => sF({...f, services:e.target.value})} placeholder="Creative, Production, Install..."/>
-          <Inp label="Portfolio URL" value={f.portfolio_url} onChange={e => sF({...f, portfolio_url:e.target.value})} placeholder="https://..."/>
-          <Inp label="Contact Email" required type="email" value={f.contact_email} onChange={e => sF({...f, contact_email:e.target.value})} placeholder="hello@company.com"/>
-          <div style={{display:'flex',gap:8}}>
-            <Btn variant="secondary" onClick={() => setShow(false)} style={{flex:1,justifyContent:'center'}}>Cancel</Btn>
-            <Btn onClick={submit} disabled={sending} style={{flex:1,justifyContent:'center'}}>{sending ? 'Submitting...' : 'Submit'}</Btn>
+    {loading ? <Spinner /> : partners.length === 0
+      ? <Card style={{padding:36,textAlign:'center'}}><p style={{color:'var(--mu)'}}>No partners yet — be the first to apply!</p></Card>
+      : <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(250px,1fr))',gap:16}}>
+        {partners.map(p => <Card key={p.id} className="ch" onClick={() => setSel(p)} style={{padding:'20px 18px',cursor:'pointer'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+            <div style={{width:40,height:40,borderRadius:10,background:'var(--col)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>
+              {p.logo_url?.startsWith('http') ? <img src={p.logo_url} alt="" style={{width:40,height:40,borderRadius:10,objectFit:'cover'}}/> : (p.logo_url || '🎨')}
+            </div>
+            <div>
+              <div style={{fontSize:15,fontWeight:600}}>{p.company_name}</div>
+              <div style={{fontSize:12,color:'var(--co)'}}>Verified Partner</div>
+            </div>
           </div>
-        </div>}
-    </Card>
+          <div style={{display:'flex',flexWrap:'wrap',gap:4,marginBottom:8}}>
+            {(p.services || '').split(',').map((s, i) => <span key={i} style={{fontSize:10,padding:'2px 7px',borderRadius:5,background:'var(--bg)',color:'var(--sl)',border:'1px solid var(--ln)'}}>{s.trim()}</span>)}
+          </div>
+          {p.description && <p style={{fontSize:12,color:'var(--mu)',lineHeight:1.6}}>{p.description.slice(0, 100)}{p.description.length > 100 ? '...' : ''}</p>}
+        </Card>)}
+      </div>}
+
+    {/* Profile overlay */}
+    {sel && <Overlay onClose={() => setSel(null)}>
+      <Card style={{maxWidth:480,width:'95vw',padding:24}}>
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+          <div style={{width:52,height:52,borderRadius:12,background:'var(--col)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>
+            {sel.logo_url?.startsWith('http') ? <img src={sel.logo_url} alt="" style={{width:52,height:52,borderRadius:12,objectFit:'cover'}}/> : (sel.logo_url || '🎨')}
+          </div>
+          <div>
+            <h3 style={{fontFamily:'var(--fd)',fontSize:20,fontWeight:700}}>{sel.company_name}</h3>
+            <div style={{fontSize:13,color:'var(--co)',fontWeight:600}}>Verified Partner</div>
+          </div>
+        </div>
+        {sel.description && <p style={{fontSize:14,color:'var(--sl)',lineHeight:1.7,marginBottom:14}}>{sel.description}</p>}
+        <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:14}}>
+          {(sel.services || '').split(',').map((s, i) => <span key={i} style={{padding:'4px 10px',borderRadius:7,background:'var(--bg)',fontSize:12,fontWeight:500,border:'1px solid var(--ln)'}}>{s.trim()}</span>)}
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:16}}>
+          {sel.contact_email && <div style={{fontSize:13}}><strong>Contact:</strong> <a href={`mailto:${sel.contact_email}`} style={{color:'var(--co)'}}>{sel.contact_email}</a></div>}
+          {sel.portfolio_url && <div style={{fontSize:13}}><strong>Portfolio:</strong> <a href={sel.portfolio_url} target="_blank" rel="noopener" style={{color:'var(--co)'}}>{sel.portfolio_url}</a></div>}
+          {sel.website && <div style={{fontSize:13}}><strong>Website:</strong> <a href={sel.website} target="_blank" rel="noopener" style={{color:'var(--co)'}}>{sel.website}</a></div>}
+        </div>
+        <Btn variant="secondary" onClick={() => setSel(null)} style={{width:'100%',justifyContent:'center'}}>Close</Btn>
+      </Card>
+    </Overlay>}
   </div>
 }
